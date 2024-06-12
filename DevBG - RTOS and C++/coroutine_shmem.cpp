@@ -55,7 +55,7 @@ private:
 struct Event::Awaiter {
     Awaiter(const Event& p_event) : event(p_event) {}
 
-    bool await_ready() const { return false; };
+    bool await_ready() const;
     bool await_suspend(coroutine_handle<> handle) noexcept;
     void await_resume() noexcept {}
 
@@ -64,6 +64,18 @@ private:
     const Event& event;
     coroutine_handle<> coroutineHandle;
 };
+
+bool 
+Event::Awaiter::await_ready() const {
+
+    if (event.suspended.load() != nullptr){
+        throw std::runtime_error("More than one waiter is not valid");
+    }
+
+    // Suspend the coroutine.
+    event.notified = false;
+    return event.notified;
+}
 
 bool
 Event::Awaiter::await_suspend(coroutine_handle<> handle)
@@ -94,7 +106,7 @@ struct Task {
 
 template<typename T, typename N>
 void Event::notify(T buffer, int fd, N size) noexcept {
-    notified = false;
+    notified = true;
 
     auto* waiter =
         static_cast<Awaiter*>(suspended.load());
