@@ -31,7 +31,7 @@ struct Config {
     void changeSetting(string_view setting, 
                        string_view value) {
         if (!settings)
-            settings.emplace("default_settings.cfg");
+            settings.emplace("default_settings");
         settings->setSetting(setting, value);
     }
 };
